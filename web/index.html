@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lightrover Web Teleop V8</title>
+  <link rel="stylesheet" href="/static/style.css?v=v8-volume" />
+</head>
+<body>
+  <header>
+    <h1>Lightrover Web Teleop V8</h1>
+    <div class="status"><span id="wsState">WS: -</span><span id="robotState">Robot: -</span><span id="skyState">SkyWay: -</span></div>
+  </header>
+  <section class="card robotBar">
+    <label for="robotSelect">Robot</label>
+    <select id="robotSelect"></select>
+    <label class="switchControl" for="watchdogToggle">
+      <input id="watchdogToggle" type="checkbox" checked />
+      <span>Safety watchdog ON/OFF</span>
+    </label>
+    <span id="watchdogState" class="mono">watchdog: -</span>
+    <span class="hint">操作対象を切り替えると、前のロボットへ停止指令を送ります。</span>
+  </section>
+  <main class="grid">
+    <section class="card videoCard">
+      <h2>Camera / SkyWay</h2>
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="cameraControls">
+        <label for="zoomSlider">Zoom <span id="zoomValue" class="mono">1.0x</span></label>
+        <input id="zoomSlider" type="range" min="1" max="3" step="0.1" value="1" />
+        <label for="brightnessSlider">Brightness <span id="brightnessValue" class="mono">100%</span></label>
+        <input id="brightnessSlider" type="range" min="0.5" max="1.5" step="0.05" value="1" />
+        <button id="resetCameraBtn" type="button">カメラ調整リセット</button>
+        <div id="cameraSettingsState" class="mono">camera: zoom=1.0x brightness=100%</div>
+      </div>
+      <div class="row"><button id="joinSkywayBtn">SkyWay映像を受信</button></div>
+      <div class="audioControls">
+        <label for="volumeSlider">音量 <span id="volumeValue" class="mono">100%</span></label>
+        <input id="volumeSlider" type="range" min="0" max="100" step="1" value="100" />
+        <label class="switchControl audioMute" for="muteToggle">
+          <input id="muteToggle" type="checkbox" />
+          <span>ミュート</span>
+        </label>
+      </div>
+      <p class="hint">先に <code>/camera-gateway</code> を開いて映像・音声送信を開始してください。ズーム/明るさは送信側Canvasに反映され、SkyWay配信映像にも反映されます。</p>
+    </section>
+    <section class="card mapCard">
+      <h2>Map / Pose</h2>
+      <canvas id="mapCanvas" width="640" height="480"></canvas>
+      <div class="mapControls" aria-label="Map view controls">
+        <div class="mapZoomControls">
+          <label for="mapZoomSlider">地図ズーム <b id="mapZoomValue">1.00x</b></label>
+          <input id="mapZoomSlider" type="range" min="0.25" max="8" step="0.05" value="1" />
+          <span>角度 <b id="mapRotationValue">0°</b></span>
+        </div>
+      </div>
+      <div class="row"><button id="setPoseBtn">現在位置と向きを地図ドラッグで設定</button></div>
+      <p class="hint">地図はスライダーで拡大・縮小、ドラッグで上下左右に移動できます。Shiftを押しながら左右へドラッグすると回転します。初期位置設定モード中のドラッグは位置・向き設定になります。</p>
+      <div id="mapStatus" class="mono">map: waiting</div>
+      <div id="mapViewStatus" class="mono">view: zoom=1.00x pan=(0, 0) rotate=0°</div>
+      <div id="poseText" class="mono">pose: -</div>
+    </section>
+    <section class="card controlCard">
+      <h2>Teleop</h2>
+      <div class="pad">
+        <div></div><button class="move" data-dir="forward">↑</button><div></div>
+        <button class="move" data-dir="left">←</button><button id="stopBtn" class="stop">STOP</button><button class="move" data-dir="right">→</button>
+        <div></div><button class="move" data-dir="backward">↓</button><div></div>
+      </div>
+      <p class="hint">押している間だけ移動指令を送信します。離す・切断・切替で停止します。</p>
+      <div class="captureControls">
+        <button id="capturePhotoBtn" type="button">撮影</button>
+        <div id="captureStatus" class="mono">photo: -</div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/static/app.js?v=v8-volume"></script>
+</body>
+</html>

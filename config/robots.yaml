@@ -1,0 +1,68 @@
+robots:
+  - id: lightrover1
+    name: Lightrover 1
+    ros_domain_id: 1
+    cmd_vel_topic: /rover_twist_cmd
+    motor_cmd_vel_topic: /rover_twist
+    image_topic: /image_raw/compressed
+    image_type: compressed
+    map_topic: /map
+    map_yaml: maps/1F.yaml
+    scan_topic: /scan
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    linear_speed: 0.18
+    angular_speed: 0.7
+    command_hz: 15
+    watchdog_timeout_sec: 0.35
+    watchdog_enabled: true
+    watchdog_service_name: /lightrover_safety_watchdog/set_parameters
+    camera_fps: 10
+    jpeg_quality: 70
+    camera_zoom_default: 1.0
+    camera_zoom_min: 1.0
+    camera_zoom_max: 3.0
+    camera_zoom_step: 0.1
+    camera_brightness_default: 1.0
+    camera_brightness_min: 0.5
+    camera_brightness_max: 1.5
+    camera_brightness_step: 0.05
+    audio_enabled: true
+    audio_topic: /lightrover/audio/pcm_s16le
+    audio_sample_rate: 16000
+    audio_channels: 1
+
+  # - id: lightrover2
+  #   name: Lightrover 2
+  #   ros_domain_id: 2
+  #   cmd_vel_topic: /rover_twist_cmd
+  #   motor_cmd_vel_topic: /rover_twist
+  #   image_topic: /image_raw/compressed
+  #   image_type: compressed
+  #   map_topic: /map
+  #   map_yaml: maps/1F.yaml
+  #   scan_topic: /scan
+  #   odom_frame: odom
+  #   map_frame: map
+  #   base_frame: base_link
+  #   linear_speed: 0.18
+  #   angular_speed: 0.7
+  #   command_hz: 15
+  #   watchdog_timeout_sec: 0.35
+  #   watchdog_enabled: true
+  #   watchdog_service_name: /lightrover_safety_watchdog/set_parameters
+  #   camera_fps: 10
+  #   jpeg_quality: 70
+  #   camera_zoom_default: 1.0
+  #   camera_zoom_min: 1.0
+  #   camera_zoom_max: 3.0
+  #   camera_zoom_step: 0.1
+  #   camera_brightness_default: 1.0
+  #   camera_brightness_min: 0.5
+  #   camera_brightness_max: 1.5
+  #   camera_brightness_step: 0.05
+  #   audio_enabled: true
+  #   audio_topic: /lightrover/audio/pcm_s16le
+  #   audio_sample_rate: 16000
+  #   audio_channels: 1

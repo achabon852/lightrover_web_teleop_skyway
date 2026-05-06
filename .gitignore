@@ -1,0 +1,22 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs and runtime artifacts
+*.log
+*.pid
+*.sock
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+

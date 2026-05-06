@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lightrover Camera Gateway V8</title>
+  <link rel="stylesheet" href="/static/style.css?v=v7" />
+</head>
+<body>
+  <header>
+    <h1>Camera Gateway</h1>
+    <div class="status"><span id="wsState">WS: -</span><span id="skyState">SkyWay: -</span><span id="audioState">Audio: -</span><span id="fpsText">0 fps</span></div>
+  </header>
+  <main class="single">
+    <section class="card">
+      <h2>ROS2画像トピック → Canvas → SkyWay publish</h2>
+      <select id="robotSelect"></select>
+      <button id="startBtn">SkyWay送信開始</button>
+      <button id="stopBtn" class="stop">配信停止</button>
+      <canvas id="cameraCanvas" width="640" height="480"></canvas>
+      <div class="cameraControls">
+        <label for="zoomSlider">Zoom <span id="zoomValue" class="mono">1.0x</span></label>
+        <input id="zoomSlider" type="range" min="1" max="3" step="0.1" value="1" />
+        <label for="brightnessSlider">Brightness <span id="brightnessValue" class="mono">100%</span></label>
+        <input id="brightnessSlider" type="range" min="0.5" max="1.5" step="0.05" value="1" />
+        <button id="resetCameraBtn" type="button">カメラ調整リセット</button>
+      </div>
+      <div id="robotInfo" class="mono"></div>
+      <div id="gatewayStatus" class="hint">未接続</div>
+      <p class="hint">音声はLightrover側のマイクpublisherが出すROS2 PCMトピックを受信してSkyWayへ送信します。Audio表示がpublishing ROS micになれば送信中です。</p>
+    </section>
+  </main>
+  <script type="module" src="/static/camera_gateway.js?v=v8"></script>
+</body>
+</html>
