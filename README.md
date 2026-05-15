@@ -1,8 +1,8 @@
-# Lightrover Web Teleop + SkyWay + 高精度地図表示 V8（PC重処理 / Lightrover軽量版）
+# Lightrover Web Teleop + SkyWay + 高精度地図表示 V9（PC重処理 / Lightrover軽量版）
 
 このプロジェクトは、LightroverをWebブラウザから遠隔操作し、USBカメラ映像をSkyWayで表示し、さらにLiDARで作成した地図上に現在位置を高精度に表示するための一式です。
 
-今回の版は **可能な限りLightrover側を軽くし、重い処理を操作PC側へ寄せる構成** です。V8ではV7の地図表示操作・カメラズーム・明るさ調整・写真撮影に加えて、SkyWayでマイク音声も同時に配信できます。
+今回の版は **可能な限りLightrover側を軽くし、重い処理を操作PC側へ寄せる構成** です。V9ではV8の地図表示操作・カメラズーム・明るさ調整・写真撮影・マイク音声配信を維持しつつ、PC側で `skyway_ros_bridge` を使ってROS画像トピックをSkyWayへ直接publishできる経路を追加しています。
 
 ---
 
@@ -23,7 +23,8 @@ flowchart LR
     TF["map -> base_link"]
     SERVER["FastAPI + WebSocket"]
     WORKER["ROS Worker\n画像/地図/現在位置取得"]
-    SKY["Camera Gateway\nSkyWay publish"]
+    BRIDGE["V9 skyway_ros_bridge\nROS画像 -> SkyWay Video"]
+    SKY["V8 Camera Gateway\nSkyWay audio / fallback video"]
   end
 
   subgraph Browser["Webブラウザ"]
@@ -37,11 +38,13 @@ flowchart LR
   NAV2 --> TF
   MAP --> WORKER
   TF --> WORKER
+  UC --> BRIDGE
   SERVER -->|/rover_twist_cmd| SW
   WORKER --> SERVER
   SERVER --> UI
   MIC["Microphone"] --> SKY
-  SKY -->|SkyWay audio/video| UI
+  BRIDGE -->|SkyWay video| UI
+  SKY -->|SkyWay audio / fallback video| UI
 ```
 
 ---
@@ -107,6 +110,8 @@ lightrover_web_teleop_skyway/
 │   ├── launch_lightrover_mic_publisher.sh
 │   ├── launch_safety_watchdog_lightrover.sh
 │   ├── launch_pc_localization.sh
+│   ├── launch_skyway_ros_bridge_pc.sh
+│   ├── skyway_ros_bridge_v9.py
 │   ├── lightrover_mic_publisher.py
 │   ├── check_lightrover_topics.sh
 │   └── check_pc_pose.sh
@@ -135,6 +140,7 @@ lightrover_web_teleop_skyway/
 - CycloneDDS
 - Python 3.12
 - SkyWayアカウント
+- V9映像経路を使う場合はPC側に `skyway_ros_bridge`
 
 ---
 
@@ -553,11 +559,103 @@ http://localhost:8080/camera-gateway
 http://localhost:8080/
 ```
 
-必ず先に `/camera-gateway` を開きます。
+V8互換経路では、必ず先に `/camera-gateway` を開きます。
+
+V9の `skyway_ros_bridge` 映像経路を使う場合、映像publishはPC側の `skyway_ros_bridge` が行います。マイク音声も使う場合だけ、`/camera-gateway?audio_only=1` を開いて音声publishを開始します。
 
 ---
 
-## 11. 起動順まとめ
+## 11. V9 skyway_ros_bridge映像経路
+
+V9では、Lightrover側にSkyWay処理を追加せず、PC側で `skyway_ros_bridge` を動かしてROS画像トピックをSkyWayへpublishします。
+
+### 11.1 skyway_ros_bridgeの準備
+
+PC側で `skyway_ros_bridge` を取得・ビルドします。
+
+```bash
+cd ~
+git clone --recursive https://github.com/skyway/skyway_ros_bridge.git
+cd ~/skyway_ros_bridge
+./scripts/download_sdk.sh
+source /opt/ros/jazzy/setup.bash
+colcon build
+```
+
+`~/skyway_ros_bridge/install/setup.bash` 以外の場所にビルドした場合は、起動時に `SKYWAY_ROS_BRIDGE_SETUP` を指定します。
+
+```bash
+export SKYWAY_ROS_BRIDGE_SETUP=/path/to/skyway_ros_bridge/install/setup.bash
+```
+
+### 11.2 V9設定
+
+`config/robots.yaml` の以下を実機トピックに合わせます。
+
+```yaml
+skyway_bridge_member_name: skyway_ros_bridge-lightrover1
+skyway_bridge_image_topic: /image_raw/compressed
+skyway_bridge_image_compressed: true
+```
+
+`skyway_bridge_image_topic` は `sensor_msgs/msg/CompressedImage` の場合は `skyway_bridge_image_compressed: true`、`sensor_msgs/msg/Image` の場合は `false` にします。
+
+### 11.3 V9起動
+
+Webサーバとは別ターミナルで実行します。
+
+```bash
+cd ~/lightrover_web_teleop_skyway
+source .venv/bin/activate
+./scripts/launch_skyway_ros_bridge_pc.sh --robot-id lightrover1
+```
+
+このスクリプトは以下を行います。
+
+- `skyway_ros_bridge` パッケージが見えるか確認
+- `ros2 topic type --no-daemon` でROS画像トピック型が設定と一致するか確認
+- `ros2 run skyway_ros_bridge skyway` をPC側で起動
+- `/join_room` でSkyWay Roomへ参加
+- `/publish_video_stream_to_skyway_by_image` でROS画像トピックをSkyWayへpublish
+
+ROS 2 daemonの探索が詰まる環境でも動くように、V9スクリプトの事前確認は `--no-daemon` を使います。手動で確認する場合は以下を使います。
+
+```bash
+ros2 topic type --no-daemon --spin-time 2.0 /image_raw/compressed
+ros2 service list --no-daemon --spin-time 2.0
+```
+
+マイク音声もSkyWayへ送る場合は、Webサーバ起動後に以下を開いて `SkyWay送信開始` を押します。
+
+```text
+http://localhost:8080/camera-gateway?audio_only=1
+```
+
+操作画面は通常どおり開きます。
+
+```text
+http://localhost:8080/
+```
+
+`SkyWay映像を受信` を押すと、`skyway_ros_bridge-lightrover1` がpublishした映像を購読します。音声を有効にした場合は、`camera_gateway-lightrover1` の音声も同じ受信映像に追加されます。
+
+操作画面のCamera / SkyWay欄には、現在の映像ソースが表示されます。
+
+```text
+video: V9 skyway_ros_bridge (skyway_ros_bridge-lightrover1)
+```
+
+V8互換の `/camera-gateway` 映像を受信している場合は以下のように表示されます。
+
+```text
+video: V8 camera_gateway (camera_gateway-lightrover1)
+```
+
+V8方式へ戻したい場合は、V9スクリプトを止めて、従来どおり `/camera-gateway` を開いて `SkyWay送信開始` を押します。
+
+---
+
+## 12. 起動順まとめ
 
 ### Lightrover側
 
@@ -571,16 +669,18 @@ http://localhost:8080/
 
 6. Nav2 localization / AMCL起動
 7. Webサーバ起動
-8. `http://localhost:8080/camera-gateway` を開く
-9. `SkyWay送信開始` を押す
+8. V9映像経路: `./scripts/launch_skyway_ros_bridge_pc.sh --robot-id lightrover1`
+9. 音声も使う場合: `http://localhost:8080/camera-gateway?audio_only=1` を開いて `SkyWay送信開始`
 10. `http://localhost:8080/` を開く
 11. `SkyWay映像を受信` を押す
 12. 地図と現在位置を確認
 13. 車輪を浮かせた状態で前後左右・STOP確認
 
+V8互換経路を使う場合は、手順8の代わりに `http://localhost:8080/camera-gateway` を開いて `SkyWay送信開始` を押します。
+
 ---
 
-## 12. 完全動作確認チェックリスト
+## 13. 完全動作確認チェックリスト
 
 ### Lightrover側
 
@@ -677,7 +777,7 @@ python server/run_server.py
 
 ---
 
-## 13. 安全確認
+## 14. 安全確認
 
 初回は必ず車輪を浮かせて確認してください。
 
@@ -701,7 +801,7 @@ ros2 topic echo /rover_twist
 
 ---
 
-## 14. トラブルシュート
+## 15. トラブルシュート
 
 ### `/image_raw/compressed` がない
 
@@ -789,7 +889,7 @@ AMCLに初期位置が必要な場合はRViz2または `/initialpose` で初期�
 
 ---
 
-## 15. 推奨パラメータ
+## 16. 推奨パラメータ
 
 | 項目 | 推奨値 |
 |---|---|
@@ -805,12 +905,13 @@ AMCLに初期位置が必要な場合はRViz2または `/initialpose` で初期�
 
 ---
 
-## 16. この版の重要ポイント
+## 17. この版の重要ポイント
 
 - Lightrover側にブラウザは不要
 - Lightrover側でAMCLやmap_serverは起動しない
 - PC側でNav2 localization / AMCLを起動する
-- 映像はROS2 `/image_raw/compressed` からPC側で受け、SkyWayへ送る
+- V9映像はPC側の `skyway_ros_bridge` がROS2 `/image_raw/compressed` からSkyWayへ送る
+- V8互換映像はROS2 `/image_raw/compressed` からPC側Webサーバで受け、`/camera-gateway` からSkyWayへ送る
 - 音声はLightrover側の `/lightrover/audio/pcm_s16le` からPC側で受け、`/camera-gateway` でSkyWayへ送る
 - 操作指令は `/rover_twist_cmd` へ送る
 - Lightrover側Safety Watchdogが `/rover_twist` へ中継する
@@ -819,7 +920,7 @@ AMCLに初期位置が必要な場合はRViz2または `/initialpose` で初期�
 
 ---
 
-## 17. カメラズーム・明るさ調整・音声配信
+## 18. カメラズーム・明るさ調整・音声配信
 
 V8では、既存の構成・手順・安全停止・地図表示機能を維持したまま、SkyWay映像用のカメラ調整機能、写真撮影機能、マイク音声配信を使用できます。
 
@@ -836,7 +937,7 @@ V8では、既存の構成・手順・安全停止・地図表示機能を維持
 | 音声配信 | Lightrover接続マイクのROS2 PCM音声をSkyWayで同時配信 |
 | 受信音量調整 | 操作画面のCamera / SkyWay下部で音量とミュートを調整 |
 
-### 17.1 重要な考え方
+### 18.1 重要な考え方
 
 このズームと明るさ調整は、Lightrover側のUSBカメラ本体を直接制御するものではありません。
 
@@ -860,7 +961,7 @@ Lightrover USB mic
 
 そのため、Lightrover側にはブラウザもSkyWay処理も不要です。Lightrover側で行う音声処理は `arecord` によるPCM読み取りとROS2 publishだけです。
 
-### 17.2 画面上の操作
+### 18.2 画面上の操作
 
 `http://localhost:8080/` のSkyWay映像の下に以下が表示されます。
 
@@ -881,7 +982,7 @@ Teleopの下にある `撮影` ボタンを押すと、現在受信しているS
 - `Brightness` を上げると、映像を明るくします。
 - `カメラ調整リセット` を押すと、ズーム1.0倍、明るさ100%に戻ります。
 
-### 17.3 操作順
+### 18.3 操作順
 
 通常どおり、以下の順に起動します。
 
@@ -897,7 +998,7 @@ Teleopの下にある `撮影` ボタンを押すと、現在受信しているS
 9. 映像下のZoom / Brightnessスライダーを調整
 ```
 
-### 17.4 `config/robots.yaml` の設定
+### 18.4 `config/robots.yaml` の設定
 
 各ロボット設定に以下の項目を追加できます。
 
@@ -933,7 +1034,7 @@ audio_channels: 1
 | `audio_sample_rate` | PCMサンプルレート。標準は16000Hz |
 | `audio_channels` | PCMチャンネル数。標準は1ch |
 
-### 17.5 注意点
+### 18.5 注意点
 
 - このズームは光学ズームではなく、デジタルズームです。
 - 3倍に近づくほど画質は粗くなります。
@@ -942,8 +1043,9 @@ audio_channels: 1
 - `/camera-gateway` が開かれていないとSkyWayへの映像publishは行われません。
 - `/camera-gateway` の `Audio:` 表示が `publishing ROS mic` になっていれば音声もpublishされています。
 - ブラウザの自動再生制限により音声が出ない場合は、操作画面の `SkyWay映像を受信` を押し直してください。
+- V9の `skyway_ros_bridge` 映像経路はROS画像トピックを直接SkyWayへpublishするため、Canvasのズーム・明るさ補正は映像に反映されません。ズーム・明るさ補正を使う場合はV8互換の `/camera-gateway` 映像経路を使用してください。
 
-### 17.6 動作確認
+### 18.6 動作確認
 
 1つ目のタブでCamera Gatewayを開きます。
 
@@ -982,11 +1084,11 @@ http://localhost:8080/
 
 ---
 
-## 18. V7追加機能：地図の拡大・縮小、上下左右移動、回転
+## 19. V7追加機能：地図の拡大・縮小、上下左右移動、回転
 
 V7では、Web画面の `Map / Pose` に地図表示操作を追加しています。
 
-### 18.1 追加された操作
+### 19.1 追加された操作
 
 | 操作 | 方法 |
 |---|---|
@@ -994,7 +1096,7 @@ V7では、Web画面の `Map / Pose` に地図表示操作を追加していま�
 | 地図の上下左右移動 | 地図をドラッグ |
 | 地図の回転 | Shiftを押しながら地図を左右へドラッグ |
 
-### 18.2 初期位置設定との使い分け
+### 19.2 初期位置設定との使い分け
 
 通常時は、地図をドラッグすると表示範囲を上下左右に移動できます。
 
@@ -1007,13 +1109,13 @@ V7では、Web画面の `Map / Pose` に地図表示操作を追加していま�
 | 通常モード | 地図の表示位置を移動 |
 | 初期位置設定モード | ロボットの現在位置と向きを設定 |
 
-### 18.3 現在位置表示との関係
+### 19.3 現在位置表示との関係
 
 地図を拡大・縮小・移動・回転しても、`map -> base_link` TFから得られるロボット現在位置は、同じ変換でCanvas上へ再描画されます。
 
 そのため、地図を回転表示しても、ロボット矢印は地図に対する向きを保ったまま表示されます。
 
-### 18.4 注意点
+### 19.4 注意点
 
 - 地図の拡大・縮小・移動・回転はWeb画面上の表示操作です。
 - ROS2の `/map` データ自体は変更しません。

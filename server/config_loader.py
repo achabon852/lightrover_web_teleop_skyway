@@ -41,6 +41,9 @@ class RobotConfig:
     audio_topic: str = "/lightrover/audio/pcm_s16le"
     audio_sample_rate: int = 16000
     audio_channels: int = 1
+    skyway_bridge_member_name: str | None = None
+    skyway_bridge_image_topic: str | None = None
+    skyway_bridge_image_compressed: bool | None = None
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "RobotConfig":

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lightrover Web Teleop V8</title>
-  <link rel="stylesheet" href="/static/style.css?v=v8-volume" />
+  <title>Lightrover Web Teleop V9</title>
+  <link rel="stylesheet" href="/static/style.css?v=v9-source" />
 </head>
 <body>
   <header>
-    <h1>Lightrover Web Teleop V8</h1>
+    <h1>Lightrover Web Teleop V9</h1>
     <div class="status"><span id="wsState">WS: -</span><span id="robotState">Robot: -</span><span id="skyState">SkyWay: -</span></div>
   </header>
   <section class="card robotBar">
@@ -34,6 +34,7 @@
         <div id="cameraSettingsState" class="mono">camera: zoom=1.0x brightness=100%</div>
       </div>
       <div class="row"><button id="joinSkywayBtn">SkyWay映像を受信</button></div>
+      <div id="videoSourceState" class="mono">video: -</div>
       <div class="audioControls">
         <label for="volumeSlider">音量 <span id="volumeValue" class="mono">100%</span></label>
         <input id="volumeSlider" type="range" min="0" max="100" step="1" value="100" />
@@ -42,7 +43,7 @@
           <span>ミュート</span>
         </label>
       </div>
-      <p class="hint">先に <code>/camera-gateway</code> を開いて映像・音声送信を開始してください。ズーム/明るさは送信側Canvasに反映され、SkyWay配信映像にも反映されます。</p>
+      <p class="hint">V9映像は <code>skyway_ros_bridge</code>、V8互換映像は <code>/camera-gateway</code> から受信します。ズーム/明るさはV8互換映像に反映されます。</p>
     </section>
     <section class="card mapCard">
       <h2>Map / Pose</h2>
@@ -74,6 +75,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="/static/app.js?v=v8-volume"></script>
+  <script type="module" src="/static/app.js?v=v9-source"></script>
 </body>
 </html>

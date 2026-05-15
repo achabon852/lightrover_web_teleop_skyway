@@ -69,3 +69,18 @@ V7 adds browser-side photo capture on the operator page. The `撮影` button dra
 ## V8 Audio Publish
 
 V8 publishes microphone audio from the Lightrover without requiring a browser on the robot. A lightweight ROS2 node on the Lightrover reads ALSA microphone PCM with `arecord` and publishes `std_msgs/UInt8MultiArray` chunks on `/lightrover/audio/pcm_s16le`. The PC-side ROS worker subscribes to that topic and forwards the PCM chunks over the existing WebSocket to `/camera-gateway`. The gateway reconstructs the PCM through Web Audio, publishes the resulting audio track to SkyWay, and the operator page subscribes to both video and audio publications from the same camera gateway member.
+
+## V9 skyway_ros_bridge Publish
+
+V9 keeps the V8 PC-heavy / Lightrover-lightweight split and adds a PC-side `skyway_ros_bridge` path for video. The Lightrover still only publishes ROS topics such as `/image_raw/compressed`; the PC joins the same SkyWay Room through `skyway_ros_bridge` and publishes that ROS image topic as a SkyWay VideoStream.
+
+```mermaid
+flowchart LR
+  CAM["Lightrover USB Camera"] --> IMG["ROS2 /image_raw/compressed"]
+  IMG --> BRIDGE["PC skyway_ros_bridge"]
+  BRIDGE -->|SkyWay VideoStream| UI["Operator page"]
+  MIC["Lightrover USB mic"] --> AUDIO["V8 audio WebSocket path"]
+  AUDIO -->|SkyWay AudioStream| UI
+```
+
+The V8 browser camera gateway remains available as a fallback and for audio publishing. `skyway_ros_bridge` currently covers ROS image and string data streams, so the V8 audio path is intentionally retained.

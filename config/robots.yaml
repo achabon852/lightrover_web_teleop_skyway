@@ -32,6 +32,9 @@ robots:
     audio_topic: /lightrover/audio/pcm_s16le
     audio_sample_rate: 16000
     audio_channels: 1
+    skyway_bridge_member_name: skyway_ros_bridge-lightrover1
+    skyway_bridge_image_topic: /image_raw/compressed
+    skyway_bridge_image_compressed: true
 
   # - id: lightrover2
   #   name: Lightrover 2

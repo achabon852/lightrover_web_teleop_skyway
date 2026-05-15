@@ -16,6 +16,7 @@ const brightnessSlider = document.getElementById('brightnessSlider');
 const brightnessValue = document.getElementById('brightnessValue');
 const resetCameraBtn = document.getElementById('resetCameraBtn');
 const ctx2d = canvas.getContext('2d', { alpha: false, desynchronized: true });
+const audioOnlyMode = new URLSearchParams(location.search).get('audio_only') === '1';
 
 let robots = [];
 let ws = null;
@@ -310,7 +311,7 @@ async function startPublish() {
   started = true;
   connectImageWs(r.id);
   skyState.textContent = 'SkyWay: connecting';
-  setStatus('SkyWay接続中...');
+  setStatus(audioOnlyMode ? 'SkyWay音声接続中...' : 'SkyWay接続中...');
 
   const tokenRes = await fetch(`/api/skyway-token?robot_id=${encodeURIComponent(r.id)}&role=camera_gateway`);
   if (!tokenRes.ok) throw new Error(await tokenRes.text());
@@ -319,13 +320,15 @@ async function startPublish() {
   room = await SkyWayRoom.FindOrCreate(context, { name: skywayRoom });
   member = await room.join({ name: memberName, metadata: 'ros2-camera-gateway' });
 
-  canvasStream = canvas.captureStream(r.camera_fps || 10);
-  const track = canvasStream.getVideoTracks()[0];
-  const stream = new LocalVideoStream(track);
-  publication = await member.publish(stream, {
-    type: 'p2p',
-    codecCapabilities: [{ mimeType: 'video/vp8' }, { mimeType: 'video/h264' }],
-  });
+  if (!audioOnlyMode) {
+    canvasStream = canvas.captureStream(r.camera_fps || 10);
+    const track = canvasStream.getVideoTracks()[0];
+    const stream = new LocalVideoStream(track);
+    publication = await member.publish(stream, {
+      type: 'p2p',
+      codecCapabilities: [{ mimeType: 'video/vp8' }, { mimeType: 'video/h264' }],
+    });
+  }
   await publishRosAudio();
 
   frameCount = 0;
@@ -333,8 +336,10 @@ async function startPublish() {
   fpsTimer = setInterval(() => {
     const age = Math.round(performance.now() - lastFrameAt);
     fpsText.textContent = `${frameCount} fps`;
-    skyState.textContent = `SkyWay: publishing ${skywayRoom}`;
-    setStatus(`SkyWay配信中: room=${skywayRoom} / zoom=${formatZoom(cameraSettings.zoom)} / brightness=${formatBrightness(cameraSettings.brightness)} / ROS frames=${frameCount} / last=${age}ms前`);
+    skyState.textContent = audioOnlyMode ? `SkyWay: publishing audio ${skywayRoom}` : `SkyWay: publishing ${skywayRoom}`;
+    setStatus(audioOnlyMode
+      ? `SkyWay音声配信中: room=${skywayRoom}`
+      : `SkyWay配信中: room=${skywayRoom} / zoom=${formatZoom(cameraSettings.zoom)} / brightness=${formatBrightness(cameraSettings.brightness)} / ROS frames=${frameCount} / last=${age}ms前`);
     frameCount = 0;
   }, 1000);
 }
