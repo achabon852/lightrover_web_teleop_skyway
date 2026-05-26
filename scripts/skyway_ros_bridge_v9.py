@@ -163,7 +163,7 @@ def main() -> int:
 
     os.environ["ROS_DOMAIN_ID"] = str(robot.ros_domain_id)
     os.environ.setdefault("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
-    os.environ.setdefault("ROS_LOCALHOST_ONLY", "0")
+    os.environ.setdefault("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET")
 
     image_topic = getattr(robot, "skyway_bridge_image_topic", None) or robot.image_topic
     image_compressed = bool_for_image_topic(robot, image_topic)
@@ -221,7 +221,8 @@ def main() -> int:
         publish_request = (
             "{"
             f"topic_name: '{image_topic}', "
-            f"is_compressed: {str(image_compressed).lower()}"
+            f"is_compressed: {str(image_compressed).lower()}, "
+            "metadata: 'lightrover-v9-skyway-ros-bridge-video'"
             "}"
         )
         service_call(

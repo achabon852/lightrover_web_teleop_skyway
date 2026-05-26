@@ -512,7 +512,9 @@ cd ~/lightrover_web_teleop_skyway
 source /opt/ros/jazzy/setup.bash
 export ROS_DOMAIN_ID=1
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export ROS_LOCALHOST_ONLY=0
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+# CYCLONEDDS_URI で NIC を固定する場合は、ip -br addr で実在する名前を確認してください。
+# このPCでは eth0 です。存在しない eth1 を指定すると DDS 初期化で異常終了します。
 
 ros2 launch nav2_bringup localization_launch.py \
   map:=$(pwd)/maps/1F.yaml \

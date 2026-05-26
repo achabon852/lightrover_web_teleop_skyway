@@ -29,6 +29,7 @@ let skyContext = null;
 let skyRoom = null;
 let skyMember = null;
 let skyRemoteStream = null;
+let skyVideoSource = null;
 let cameraSettings = { zoom: 1.0, brightness: 1.0 };
 let cameraSettingsByRobot = {};
 let suppressCameraSliderSend = false;
@@ -595,6 +596,7 @@ async function disconnectSkyway() {
   skyRoom = null;
   skyMember = null;
   skyRemoteStream = null;
+  skyVideoSource = null;
   skyJoined = false;
   $('remoteVideo').srcObject = null;
   $('skyState').textContent = 'SkyWay: disconnected';
@@ -608,8 +610,11 @@ async function subscribePublication(publication, me, roomName) {
   if (publisher.id === me.id) return;
   const publisherName = publisher.name || '';
   const publisherMetadata = String(publisher.metadata || '');
+  const publicationMetadata = String(publication.metadata || '');
   const isCameraGateway = publisherName.startsWith('camera_gateway-');
-  const isSkywayRosBridge = publisherName.startsWith('skyway_ros_bridge-') || publisherMetadata.includes('skyway-ros-bridge');
+  const isSkywayRosBridge = publisherName.startsWith('skyway_ros_bridge-')
+    || publisherMetadata.includes('skyway-ros-bridge')
+    || publicationMetadata.includes('skyway-ros-bridge');
   if (!isCameraGateway && !isSkywayRosBridge) return;
 
   const { stream } = await me.subscribe(publication.id);
@@ -620,10 +625,15 @@ async function subscribePublication(publication, me, roomName) {
     updateAudioControls();
   }
   if (stream.contentType === 'video') {
+    if (isCameraGateway && skyVideoSource === 'skyway_ros_bridge') {
+      stream.track?.stop?.();
+      return;
+    }
     skyRemoteStream.getVideoTracks().forEach((track) => skyRemoteStream.removeTrack(track));
     skyRemoteStream.addTrack(stream.track);
+    skyVideoSource = isSkywayRosBridge ? 'skyway_ros_bridge' : 'camera_gateway';
     $('skyState').textContent = `SkyWay: subscribed video ${roomName}`;
-    $('videoSourceState').textContent = `video: ${videoSourceLabel(publisherName, publisherMetadata)}`;
+    $('videoSourceState').textContent = `video: ${videoSourceLabel(publisherName, `${publisherMetadata} ${publicationMetadata}`)}`;
   } else if (stream.contentType === 'audio') {
     skyRemoteStream.getAudioTracks().forEach((track) => skyRemoteStream.removeTrack(track));
     skyRemoteStream.addTrack(stream.track);
