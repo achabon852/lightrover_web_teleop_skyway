@@ -140,6 +140,7 @@ def start_bridge_process() -> subprocess.Popen[str]:
         text=True,
         stdout=sys.stdout,
         stderr=sys.stderr,
+        preexec_fn=os.setsid,
     )
 
 
@@ -242,11 +243,17 @@ def main() -> int:
         return 130
     finally:
         if bridge_process is not None and bridge_process.poll() is None:
-            bridge_process.send_signal(signal.SIGINT)
+            try:
+                os.killpg(os.getpgid(bridge_process.pid), signal.SIGINT)
+            except ProcessLookupError:
+                pass
             try:
                 bridge_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                bridge_process.terminate()
+                try:
+                    os.killpg(os.getpgid(bridge_process.pid), signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
 
 
 if __name__ == "__main__":

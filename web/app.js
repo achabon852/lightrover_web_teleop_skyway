@@ -100,6 +100,11 @@ function videoSourceLabel(publisherName, publisherMetadata = '') {
   return `unknown (${publisherName || 'no publisher name'})`;
 }
 
+function memberNameById(room, memberId) {
+  const member = room?.members?.find?.((candidate) => candidate.id === memberId);
+  return member?.name || '';
+}
+
 function applyCameraControlRanges() {
   const robot = currentRobotConfig();
   if (!robot) return;
@@ -606,16 +611,19 @@ async function disconnectSkyway() {
 async function subscribePublication(publication, me, roomName) {
   if (!publication || !me || !me.id) return;
   const publisher = publication?.publisher;
-  if (!publisher || !publisher.id) return;
-  if (publisher.id === me.id) return;
-  const publisherName = publisher.name || '';
-  const publisherMetadata = String(publisher.metadata || '');
+  const publisherId = publisher?.id || publication.publisherId || publication.publisher_id || '';
+  if (publisherId === me.id) return;
+  const publisherName = publisher?.name || memberNameById(skyRoom, publisherId);
+  const publisherMetadata = String(publisher?.metadata || '');
   const publicationMetadata = String(publication.metadata || '');
   const isCameraGateway = publisherName.startsWith('camera_gateway-');
   const isSkywayRosBridge = publisherName.startsWith('skyway_ros_bridge-')
     || publisherMetadata.includes('skyway-ros-bridge')
     || publicationMetadata.includes('skyway-ros-bridge');
-  if (!isCameraGateway && !isSkywayRosBridge) return;
+  if (!isCameraGateway && !isSkywayRosBridge) {
+    $('videoSourceState').textContent = `video: ignored ${publisherName || publisherId || 'unknown publisher'}`;
+    return;
+  }
 
   const { stream } = await me.subscribe(publication.id);
   const video = $('remoteVideo');
@@ -634,12 +642,19 @@ async function subscribePublication(publication, me, roomName) {
     skyVideoSource = isSkywayRosBridge ? 'skyway_ros_bridge' : 'camera_gateway';
     $('skyState').textContent = `SkyWay: subscribed video ${roomName}`;
     $('videoSourceState').textContent = `video: ${videoSourceLabel(publisherName, `${publisherMetadata} ${publicationMetadata}`)}`;
+    video.onloadedmetadata = () => {
+      $('videoSourceState').textContent = `video: ${videoSourceLabel(publisherName, `${publisherMetadata} ${publicationMetadata}`)} ${video.videoWidth || '-'}x${video.videoHeight || '-'}`;
+    };
   } else if (stream.contentType === 'audio') {
     skyRemoteStream.getAudioTracks().forEach((track) => skyRemoteStream.removeTrack(track));
     skyRemoteStream.addTrack(stream.track);
     $('skyState').textContent = `SkyWay: subscribed audio ${roomName}`;
   }
-  await video.play().catch(() => {});
+  await video.play().catch((error) => {
+    if (stream.contentType === 'video') {
+      $('videoSourceState').textContent = `video: play blocked ${error.name || error}`;
+    }
+  });
 }
 
 async function joinSkyway() {
@@ -726,7 +741,7 @@ $('setPoseBtn').onclick = () => {
   setPoseMode = !setPoseMode;
   poseDragStart = null;
   poseDragEnd = null;
-  $('setPoseBtn').textContent = setPoseMode ? '地図上で押して、向きへドラッグして離してください' : '現在位置と向きを地図ドラッグで設定';
+  $('setPoseBtn').textContent = setPoseMode ? 'Setting pose...' : 'Set pose';
   $('poseText').textContent = setPoseMode ? 'initial pose mode: drag on map to set x/y/yaw' : $('poseText').textContent;
   scheduleDrawMap();
 };
@@ -788,7 +803,7 @@ $('mapCanvas').addEventListener('pointerup', (event) => {
   setPoseMode = false;
   poseDragStart = null;
   poseDragEnd = null;
-  $('setPoseBtn').textContent = '現在位置と向きを地図ドラッグで設定';
+  $('setPoseBtn').textContent = 'Set pose';
 });
 
 $('mapCanvas').addEventListener('pointercancel', (event) => {

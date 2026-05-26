@@ -4,77 +4,88 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lightrover Web Teleop V9</title>
-  <link rel="stylesheet" href="/static/style.css?v=v9-source-priority" />
+  <link rel="stylesheet" href="/static/style.css?v=v9-hud" />
 </head>
 <body>
-  <header>
-    <h1>Lightrover Web Teleop V9</h1>
-    <div class="status"><span id="wsState">WS: -</span><span id="robotState">Robot: -</span><span id="skyState">SkyWay: -</span></div>
-  </header>
-  <section class="card robotBar">
-    <label for="robotSelect">Robot</label>
-    <select id="robotSelect"></select>
-    <label class="switchControl" for="watchdogToggle">
-      <input id="watchdogToggle" type="checkbox" checked />
-      <span>Safety watchdog ON/OFF</span>
-    </label>
-    <span id="watchdogState" class="mono">watchdog: -</span>
-    <span class="hint">操作対象を切り替えると、前のロボットへ停止指令を送ります。</span>
-  </section>
-  <main class="grid">
-    <section class="card videoCard">
-      <h2>Camera / SkyWay</h2>
+  <main class="appShell">
+    <section class="videoStage" aria-label="Camera">
       <video id="remoteVideo" autoplay playsinline></video>
+      <div class="videoShade"></div>
+      <div id="videoSourceState" class="videoBadge mono">video: -</div>
+    </section>
+
+    <header class="topHud">
+      <div class="brandBlock">
+        <h1>Lightrover Web Teleop V9</h1>
+        <div class="status"><span id="wsState">WS: -</span><span id="robotState">Robot: -</span><span id="skyState">SkyWay: -</span></div>
+      </div>
+      <div class="robotBar">
+        <label for="robotSelect">Robot</label>
+        <select id="robotSelect"></select>
+        <button id="joinSkywayBtn" type="button">SkyWay映像を受信</button>
+        <label class="switchControl" for="watchdogToggle">
+          <input id="watchdogToggle" type="checkbox" checked />
+          <span>Watchdog</span>
+        </label>
+        <span id="watchdogState" class="mono">watchdog: -</span>
+      </div>
+    </header>
+
+    <section class="hudPanel mapPanel">
+      <div class="panelHeader">
+        <h2>Map</h2>
+        <div id="poseText" class="mono">pose: -</div>
+      </div>
+      <canvas id="mapCanvas" width="640" height="480"></canvas>
+      <div class="mapControls" aria-label="Map view controls">
+        <label for="mapZoomSlider">Zoom <b id="mapZoomValue">1.00x</b></label>
+        <input id="mapZoomSlider" type="range" min="0.25" max="8" step="0.05" value="1" />
+        <span>Rot <b id="mapRotationValue">0°</b></span>
+      </div>
+      <button id="setPoseBtn" type="button">Set pose</button>
+      <div class="panelMeta">
+        <div id="mapStatus" class="mono">map: waiting</div>
+        <div id="mapViewStatus" class="mono">view: zoom=1.00x pan=(0, 0) rotate=0°</div>
+      </div>
+    </section>
+
+    <section class="hudPanel cameraPanel">
+      <div class="panelHeader">
+        <h2>Camera</h2>
+        <div id="cameraSettingsState" class="mono">camera: zoom=1.0x brightness=100%</div>
+      </div>
       <div class="cameraControls">
         <label for="zoomSlider">Zoom <span id="zoomValue" class="mono">1.0x</span></label>
         <input id="zoomSlider" type="range" min="1" max="3" step="0.1" value="1" />
         <label for="brightnessSlider">Brightness <span id="brightnessValue" class="mono">100%</span></label>
         <input id="brightnessSlider" type="range" min="0.5" max="1.5" step="0.05" value="1" />
-        <button id="resetCameraBtn" type="button">カメラ調整リセット</button>
-        <div id="cameraSettingsState" class="mono">camera: zoom=1.0x brightness=100%</div>
+        <button id="resetCameraBtn" type="button">Reset</button>
       </div>
-      <div class="row"><button id="joinSkywayBtn">SkyWay映像を受信</button></div>
-      <div id="videoSourceState" class="mono">video: -</div>
       <div class="audioControls">
-        <label for="volumeSlider">音量 <span id="volumeValue" class="mono">100%</span></label>
+        <label for="volumeSlider">Volume <span id="volumeValue" class="mono">100%</span></label>
         <input id="volumeSlider" type="range" min="0" max="100" step="1" value="100" />
         <label class="switchControl audioMute" for="muteToggle">
           <input id="muteToggle" type="checkbox" />
-          <span>ミュート</span>
+          <span>Mute</span>
         </label>
       </div>
-      <p class="hint">V9映像は <code>skyway_ros_bridge</code>、V8互換映像は <code>/camera-gateway</code> から受信します。ズーム/明るさはV8互換映像に反映されます。</p>
     </section>
-    <section class="card mapCard">
-      <h2>Map / Pose</h2>
-      <canvas id="mapCanvas" width="640" height="480"></canvas>
-      <div class="mapControls" aria-label="Map view controls">
-        <div class="mapZoomControls">
-          <label for="mapZoomSlider">地図ズーム <b id="mapZoomValue">1.00x</b></label>
-          <input id="mapZoomSlider" type="range" min="0.25" max="8" step="0.05" value="1" />
-          <span>角度 <b id="mapRotationValue">0°</b></span>
-        </div>
+
+    <section class="hudPanel controlPanel">
+      <div class="panelHeader">
+        <h2>Drive</h2>
+        <div id="captureStatus" class="mono">photo: -</div>
       </div>
-      <div class="row"><button id="setPoseBtn">現在位置と向きを地図ドラッグで設定</button></div>
-      <p class="hint">地図はスライダーで拡大・縮小、ドラッグで上下左右に移動できます。Shiftを押しながら左右へドラッグすると回転します。初期位置設定モード中のドラッグは位置・向き設定になります。</p>
-      <div id="mapStatus" class="mono">map: waiting</div>
-      <div id="mapViewStatus" class="mono">view: zoom=1.00x pan=(0, 0) rotate=0°</div>
-      <div id="poseText" class="mono">pose: -</div>
-    </section>
-    <section class="card controlCard">
-      <h2>Teleop</h2>
       <div class="pad">
-        <div></div><button class="move" data-dir="forward">↑</button><div></div>
-        <button class="move" data-dir="left">←</button><button id="stopBtn" class="stop">STOP</button><button class="move" data-dir="right">→</button>
-        <div></div><button class="move" data-dir="backward">↓</button><div></div>
+        <div></div><button class="move" data-dir="forward" aria-label="Forward">↑</button><div></div>
+        <button class="move" data-dir="left" aria-label="Left">←</button><button id="stopBtn" class="stop" aria-label="Stop">STOP</button><button class="move" data-dir="right" aria-label="Right">→</button>
+        <div></div><button class="move" data-dir="backward" aria-label="Backward">↓</button><div></div>
       </div>
-      <p class="hint">押している間だけ移動指令を送信します。離す・切断・切替で停止します。</p>
       <div class="captureControls">
         <button id="capturePhotoBtn" type="button">撮影</button>
-        <div id="captureStatus" class="mono">photo: -</div>
       </div>
     </section>
   </main>
-  <script type="module" src="/static/app.js?v=v9-source-priority"></script>
+  <script type="module" src="/static/app.js?v=v9-hud-video-fix"></script>
 </body>
 </html>
