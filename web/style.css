@@ -30,6 +30,12 @@ body {
   background: #070a0f;
 }
 
+body.gatewayPage {
+  min-height: 100%;
+  height: auto;
+  overflow: auto;
+}
+
 button,
 select,
 input {
@@ -189,10 +195,16 @@ h2 {
 }
 
 #joinSkywayBtn,
+#setPoseBtn,
 #capturePhotoBtn {
   border-color: rgba(14, 165, 233, 0.54);
   background: linear-gradient(180deg, rgba(14, 165, 233, 0.95), rgba(2, 132, 199, 0.95));
   font-weight: 740;
+}
+
+#joinSkywayBtn {
+  min-width: 150px;
+  white-space: nowrap;
 }
 
 .switchControl {
@@ -395,6 +407,85 @@ input[type="range"] {
 .grid,
 .single {
   display: contents;
+}
+
+.gatewayPage header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 16px 18px 10px;
+  background: rgba(7, 10, 15, 0.92);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+}
+
+.gatewayPage .single {
+  display: grid;
+  place-items: start center;
+  padding: 18px;
+}
+
+.gatewayPage .card {
+  display: grid;
+  width: min(920px, 100%);
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.28);
+}
+
+.gatewayActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gatewayActions select,
+.gatewayActions button {
+  width: auto;
+  height: 42px;
+  min-height: 42px;
+}
+
+.gatewayPage #startBtn {
+  border-color: rgba(14, 165, 233, 0.54);
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.95), rgba(2, 132, 199, 0.95));
+  font-weight: 740;
+}
+
+.gatewayPage #stopBtn {
+  width: fit-content;
+  min-width: 112px;
+  border-color: rgba(248, 113, 113, 0.7);
+  background: rgba(127, 29, 29, 0.72);
+  font-size: 14px;
+}
+
+.gatewayPage #cameraCanvas {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 70dvh;
+  display: block;
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  border-radius: 8px;
+  background: #05070b;
+}
+
+.gatewayPage #cameraCanvas[hidden] {
+  display: none;
+}
+
+.gatewayPage .cameraControls {
+  grid-template-columns: auto minmax(180px, 1fr);
+}
+
+.gatewayPage .hint,
+.gatewayPage #robotInfo,
+.gatewayPage #gatewayStatus {
+  display: block;
 }
 
 @media (max-width: 1180px) {

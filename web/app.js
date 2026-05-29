@@ -741,7 +741,7 @@ $('setPoseBtn').onclick = () => {
   setPoseMode = !setPoseMode;
   poseDragStart = null;
   poseDragEnd = null;
-  $('setPoseBtn').textContent = setPoseMode ? 'Setting pose...' : 'Set pose';
+  $('setPoseBtn').textContent = setPoseMode ? '位置設定中...' : '初期位置設定';
   $('poseText').textContent = setPoseMode ? 'initial pose mode: drag on map to set x/y/yaw' : $('poseText').textContent;
   scheduleDrawMap();
 };
@@ -803,7 +803,7 @@ $('mapCanvas').addEventListener('pointerup', (event) => {
   setPoseMode = false;
   poseDragStart = null;
   poseDragEnd = null;
-  $('setPoseBtn').textContent = 'Set pose';
+  $('setPoseBtn').textContent = '初期位置設定';
 });
 
 $('mapCanvas').addEventListener('pointercancel', (event) => {

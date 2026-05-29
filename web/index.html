@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lightrover Web Teleop V9</title>
-  <link rel="stylesheet" href="/static/style.css?v=v9-hud" />
+  <link rel="stylesheet" href="/static/style.css?v=v11-button-text-layout" />
 </head>
 <body>
   <main class="appShell">
@@ -22,7 +22,7 @@
       <div class="robotBar">
         <label for="robotSelect">Robot</label>
         <select id="robotSelect"></select>
-        <button id="joinSkywayBtn" type="button">SkyWay映像を受信</button>
+        <button id="joinSkywayBtn" type="button">SkyWay映像受信</button>
         <label class="switchControl" for="watchdogToggle">
           <input id="watchdogToggle" type="checkbox" checked />
           <span>Watchdog</span>
@@ -42,7 +42,7 @@
         <input id="mapZoomSlider" type="range" min="0.25" max="8" step="0.05" value="1" />
         <span>Rot <b id="mapRotationValue">0°</b></span>
       </div>
-      <button id="setPoseBtn" type="button">Set pose</button>
+      <button id="setPoseBtn" type="button">初期位置設定</button>
       <div class="panelMeta">
         <div id="mapStatus" class="mono">map: waiting</div>
         <div id="mapViewStatus" class="mono">view: zoom=1.00x pan=(0, 0) rotate=0°</div>
@@ -86,6 +86,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="/static/app.js?v=v9-hud-video-fix"></script>
+  <script type="module" src="/static/app.js?v=v12-unique-skyway-member"></script>
 </body>
 </html>

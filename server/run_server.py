@@ -1,5 +1,5 @@
 from __future__ import annotations
-import asyncio, os, sys
+import asyncio, os, sys, uuid
 from pathlib import Path
 from multiprocessing import Process, Queue
 from typing import Any
@@ -209,7 +209,7 @@ def scoped_skyway_token(
     if not robot:
         raise HTTPException(status_code=404, detail=f"unknown robot_id: {robot_id}")
     try:
-        member_name = f"{role}-{robot.id}"
+        member_name = f"{role}-{robot.id}-{uuid.uuid4().hex[:8]}"
         token = create_skyway_token(
             app_id=os.environ["SKYWAY_APP_ID"],
             secret_key=os.environ["SKYWAY_SECRET_KEY"],

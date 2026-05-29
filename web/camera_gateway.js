@@ -42,6 +42,10 @@ function setStatus(msg) {
   statusEl.textContent = msg;
 }
 
+function setCanvasVisible(visible) {
+  canvas.hidden = !visible;
+}
+
 function selectedRobot() {
   return robots.find((r) => r.id === robotSelect.value);
 }
@@ -217,7 +221,7 @@ function drawLatestImage() {
   ctx2d.restore();
 }
 
-async function stopPublish() {
+async function stopPublish({ quiet = false } = {}) {
   started = false;
   try { if (publication && member) await member.unpublish(publication.id); } catch {}
   try { if (audioPublication && member) await member.unpublish(audioPublication.id); } catch {}
@@ -242,7 +246,8 @@ async function stopPublish() {
   fpsTimer = null;
   skyState.textContent = 'SkyWay: stopped';
   audioState.textContent = 'Audio: stopped';
-  setStatus('配信停止');
+  if (!quiet) setCanvasVisible(false);
+  if (!quiet) setStatus('配信停止');
 }
 
 function decodeBase64Bytes(b64) {
@@ -304,11 +309,12 @@ async function publishRosAudio() {
 }
 
 async function startPublish() {
-  await stopPublish();
+  await stopPublish({ quiet: true });
   const r = selectedRobot();
   if (!r) return;
 
   started = true;
+  setCanvasVisible(!audioOnlyMode);
   connectImageWs(r.id);
   skyState.textContent = 'SkyWay: connecting';
   setStatus(audioOnlyMode ? 'SkyWay音声接続中...' : 'SkyWay接続中...');
@@ -367,6 +373,7 @@ resetCameraBtn.addEventListener('click', () => {
 
 startBtn.addEventListener('click', () => startPublish().catch((e) => {
   started = false;
+  setCanvasVisible(false);
   skyState.textContent = 'SkyWay: error';
   setStatus(`開始失敗: ${e}`);
 }));

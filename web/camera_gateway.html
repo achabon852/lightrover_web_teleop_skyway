@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lightrover Camera Gateway V8</title>
-  <link rel="stylesheet" href="/static/style.css?v=v7" />
+  <link rel="stylesheet" href="/static/style.css?v=v11-button-text-layout" />
 </head>
-<body>
+<body class="gatewayPage">
   <header>
     <h1>Camera Gateway</h1>
     <div class="status"><span id="wsState">WS: -</span><span id="skyState">SkyWay: -</span><span id="audioState">Audio: -</span><span id="fpsText">0 fps</span></div>
@@ -14,10 +14,12 @@
   <main class="single">
     <section class="card">
       <h2>ROS2画像トピック → Canvas → SkyWay publish</h2>
-      <select id="robotSelect"></select>
-      <button id="startBtn">SkyWay送信開始</button>
-      <button id="stopBtn" class="stop">配信停止</button>
-      <canvas id="cameraCanvas" width="640" height="480"></canvas>
+      <div class="gatewayActions">
+        <select id="robotSelect"></select>
+        <button id="startBtn">SkyWay送信開始</button>
+        <button id="stopBtn" class="stop">配信停止</button>
+      </div>
+      <canvas id="cameraCanvas" width="640" height="480" hidden></canvas>
       <div class="cameraControls">
         <label for="zoomSlider">Zoom <span id="zoomValue" class="mono">1.0x</span></label>
         <input id="zoomSlider" type="range" min="1" max="3" step="0.1" value="1" />
@@ -30,6 +32,6 @@
       <p class="hint">音声はLightrover側のマイクpublisherが出すROS2 PCMトピックを受信してSkyWayへ送信します。Audio表示がpublishing ROS micになれば送信中です。</p>
     </section>
   </main>
-  <script type="module" src="/static/camera_gateway.js?v=v8"></script>
+  <script type="module" src="/static/camera_gateway.js?v=v11-button-text-layout"></script>
 </body>
 </html>
