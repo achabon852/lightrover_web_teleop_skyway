@@ -9,6 +9,7 @@ class RobotConfig:
     id: str
     name: str
     ros_domain_id: int
+    label: str | None = None
     cmd_vel_topic: str = "/rover_twist_cmd"
     motor_cmd_vel_topic: str = "/rover_twist"
     image_topic: str = "/image_raw/compressed"
@@ -44,6 +45,8 @@ class RobotConfig:
     skyway_bridge_member_name: str | None = None
     skyway_bridge_image_topic: str | None = None
     skyway_bridge_image_compressed: bool | None = None
+    edge_base_url: str | None = None
+    skyway_room: str | None = None
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "RobotConfig":

@@ -1,6 +1,9 @@
 robots:
   - id: lightrover1
     name: Lightrover 1
+    label: Lightrover 1
+    edge_base_url: http://192.168.100.10:8001
+    skyway_room: lightrover-lightrover1
     ros_domain_id: 1
     cmd_vel_topic: /rover_twist_cmd
     motor_cmd_vel_topic: /rover_twist

@@ -135,6 +135,12 @@ def run_ros_worker(robot_dict: dict[str, Any], cmd_q: Queue, event_q: Queue) -> 
                     self.latest_cmd = self.make_twist(msg.get("direction", "stop"))
                     self.last_cmd_time = time.monotonic()
                     self.publish_cmd(self.latest_cmd)
+                elif msg.get("type") == "raw_cmd":
+                    self.latest_cmd = Twist()
+                    self.latest_cmd.linear.x = float(msg.get("linear_x", 0.0))
+                    self.latest_cmd.angular.z = float(msg.get("angular_z", 0.0))
+                    self.last_cmd_time = time.monotonic()
+                    self.publish_cmd(self.latest_cmd)
                 elif msg.get("type") == "stop":
                     self.latest_cmd = Twist()
                     self.last_cmd_time = 0.0
